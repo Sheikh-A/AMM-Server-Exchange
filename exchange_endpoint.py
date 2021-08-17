@@ -145,7 +145,7 @@ def get_algo_keys():
     
     # TODO: Generate or read (using the mnemonic secret) 
 
-    mnemonic_secret = 'ship floor pattern transfer fiscal diamond maid raise never debate lemon brown siren upset gun sibling lend write cloth success glove shrug cattle ability ivory' 
+    mnemonic_secret = 'chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble'
     algo_pk = mnemonic.to_public_key(mnemonic_secret)
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
     return algo_sk, algo_pk
@@ -154,6 +154,9 @@ def get_algo_keys():
 def get_eth_keys(filename = "eth_mnemonic.txt"):
     w3 = Web3()
     w3.eth.account.enable_unaudited_hdwallet_features()
+    acct,mnemonic_secret = w3.eth.account.create_with_mnemonic()
+    print(acct)
+    print(mnemonic_secret)
 
 
     # TODO: Generate or read (using the mnemonic secret) 
