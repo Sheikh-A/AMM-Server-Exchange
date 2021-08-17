@@ -120,8 +120,8 @@ def log_message(message_dict):
 def signature_valid(p,sig):
     result_signature_valid = False
     platform = p['platform']
-    pk = p['pk'] #PAYLOAD
     sk = sig
+    pk = p['pk'] #PAYLOAD
     message = json.dumps(p)
     
     if platform == "Ethereum":
