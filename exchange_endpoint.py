@@ -167,17 +167,16 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
   
 def fill_order(order, txes=[]):
     # TODO: 
-    # Match orders (same as Exchange Server II)
-    #1.Insert the order
-    order_obj = Order(receiver_pk=order['receiver_pk'],\
-                      buy_currency=order['buy_currency'],\
-                      sell_currency=order['sell_currency'],\
-                      buy_amount=order['buy_amount'],\
-                      sell_amount=order['sell_amount'] )
+
+    order_obj = Order(receiver_pk=order['receiver_pk'],
+                      sell_currency=order['sell_currency'],
+                      buy_currency=order['buy_currency'],
+                      sell_amount=order['sell_amount']
+                      buy_amount=order['buy_amount'],
+                    )
     g.session.add(order_obj)
     g.session.commit()
 
-    #2.Check if there are any existing orders that match
     matched_order = g.session.query(Order).filter(Order.filled==None,\
                                                   Order.buy_currency == order_obj.sell_currency,\
                                                   Order.sell_currency == order_obj.buy_currency,\
