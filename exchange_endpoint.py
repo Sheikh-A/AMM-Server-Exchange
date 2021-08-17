@@ -105,43 +105,41 @@ def connect_to_blockchains():
 
 
 """ Helper Methods (skeleton code for you to implement) """
-def check_sig(payload,sig):
-    #1. Verifying an endpoint for verifying signatures for ethereum
-    result_check_sig = False
-    platform = payload['platform']
-    sk = sig
-    pk = payload['pk']
-    message = json.dumps(payload)
-    
-    if platform == "Ethereum":
-        eth_encoded_msg = eth_account.messages.encode_defunct(text=message)
-        recovered_pk = eth_account.Account.recover_message(eth_encoded_msg,signature=sk)
-        if(recovered_pk == pk):
-            result_check_sig = True
-            #print( "Eth sig verifies!" )    
-    
-        #2. Verifying an endpoint for verifying signatures for Algorand
-    elif platform == "Algorand":
-        result_check_sig = algosdk.util.verify_bytes(message.encode('utf-8'),sk,pk)
-        if(result_check_sig):
-            #print( "Algo sig verifies!" )
-            result_check_sig = True
-    
-        #3. Check for invalid input
-    else:
-        print("invalid input")
-    #print(" this is jsonify(result_check_sig) = ",jsonify(result_check_sig))
-    return jsonify(result_check_sig)
-
 
 def log_message(message_dict):
     msg = json.dumps(message_dict)
 
     # TODO: Add message to the Log table
+    #Add Session
     g.session.add(log(message = msg))
+    #Add Commit
     g.session.commit()
     
     return
+
+def valid_signature(payload,sig):
+    result_valid_signature = False
+    platform = payload['platform']
+
+    pk = payload['pk']
+    sk = sig
+    
+    message = json.dumps(payload)
+    
+    if platform == "Algorand":
+        result_valid_signature = algosdk.util.verify_bytes(message.encode('utf-8'),sk,pk)
+        if(result_valid_signature):
+            result_valid_signature = True
+    
+    elif platform == "Ethereum":
+        eth_encoded_msg = eth_account.messages.encode_defunct(text=message)
+        recovered_pk = eth_account.Account.recover_message(eth_encoded_msg,signature=sk)
+        if(recovered_pk == pk):
+            result_valid_signature = True
+    else:
+        print("INVALID CHECK")
+    #Return Result    
+    return jsonify(result_valid_signature)
 
 def get_algo_keys():
     
@@ -366,7 +364,7 @@ def trade():
         result_check = False
         payload = content['payload']
         sig = content['sig']
-        result_check = check_sig(payload,sig)
+        result_check = valid_signature(payload,sig)
         
         # 2. Add the order to the table
         if(result_check):
