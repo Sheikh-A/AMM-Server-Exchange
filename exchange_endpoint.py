@@ -160,7 +160,7 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
 
 
     # TODO: Generate or read (using the mnemonic secret) 
-    #MNEMOCIN
+    #MNEM PHASE
     mnemonic_secret = "song funny orchard upon glide burden section cherry glance nice chef drift"
     
     
@@ -173,58 +173,52 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
 def fill_order(order, txes=[]):
     # TODO: 
 
-    order_obj = Order(receiver_pk=order['receiver_pk'],
-                      sell_currency=order['sell_currency'],
-                      buy_currency=order['buy_currency'],
-                      sell_amount=order['sell_amount'],
-                      buy_amount=order['buy_amount'],
-                     )
+    order_obj = Order(receiver_pk=order['receiver_pk'],\
+                      sell_currency=order['sell_currency'],\
+                      buy_currency=order['buy_currency'],\
+                      buy_amount=order['buy_amount'],\
+                      sell_amount=order['sell_amount'] )
     g.session.add(order_obj)
     g.session.commit()
 
-    order_match = g.session.query(Order).filter(  Order.filled==None,
-                                                  Order.sell_currency == order_obj.buy_currency,
-                                                  Order.buy_currency == order_obj.sell_currency,
-                                                  (Order.sell_amount / Order.buy_amount) >= (order_obj.buy_amount) / (order_obj.sell_amount)).first()
-
-
-    if order_match != None:
-        order_obj.filled = order_match.filled
-        order_match.filled = datetime.now()
+    matched_order = g.session.query(Order).filter(Order.filled==None,\
+                                                  Order.buy_currency == order_obj.sell_currency,\
+                                                  Order.sell_currency == order_obj.buy_currency,\
+                                                  Order.sell_amount/Order.buy_amount >= order_obj.buy_amount/order_obj.sell_amount).first()
+    
+    #3. if a match is found
+    if matched_order != None:
+        matched_order.filled = datetime.now()
+        order_obj.filled = matched_order.filled
         
-        order_obj.counterparty_id = order_match.id
-        order_match.counterparty_id = order_obj.id
-         
-
-        #ORDER SELL AMOUNT AND BUY  
-        if order_obj.sell_amount < order_match.buy_amount:
-                order_new = Order(receiver_pk = order_obj.receiver_pk,\
+        matched_order.counterparty_id = order_obj.id
+        order_obj.counterparty_id = matched_order.id 
+        
+        if order_obj.buy_amount > matched_order.sell_amount:
+                new_order = Order(receiver_pk = order_obj.receiver_pk,\
                                   buy_currency = order_obj.buy_currency, sell_currency = order_obj.sell_currency,\
-                                  buy_amount = order_obj.buy_amount - order_match.sell_amount,\
-                                  sell_amount = (order_obj.buy_amount - order_match.sell_amount)* order_obj.sell_amount / order_obj.buy_amount,\
+                                  buy_amount = order_obj.buy_amount - matched_order.sell_amount,\
+                                  sell_amount = (order_obj.buy_amount - matched_order.sell_amount)* order_obj.sell_amount / order_obj.buy_amount,\
                                   creator_id = order_obj.id)
-                
-                tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
-                txes.append(tx_obj)
-                g.session.add(tx_obj)
-                g.session.add(order_new)
-                g.session.commit()
-                  
-        if order_match.buy_amount > order_obj.sell_amount:
-                order_new = Order(receiver_pk = order_match.receiver_pk,                                   
-                buy_currency =order_match.buy_currency, sell_currency = order_match.sell_currency,                                   
-                buy_amount = order_match.buy_amount - order_obj.sell_amount,                                   
-                sell_amount= (order_match.buy_amount - order_obj.sell_amount) * order_match.sell_amount / order_match.buy_amount,                                  
-                creator_id = order_match.id)
-                #print("partially filled, order_match.buy_amount>order_new.sell_amount, creator_id =", order_new.creator_id)
+                #print("partially filled, new_order.buy_amount > matched_order.sell amount, creator_id =", new_order.creator_id)
                 #txes.append(order_obj.id)
                 tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
                 txes.append(tx_obj)
                 g.session.add(tx_obj)
-                g.session.add(order_new)
+                g.session.add(new_order)
+                g.session.commit()
+                  
+        if matched_order.buy_amount > order_obj.sell_amount:
+                new_order = Order(receiver_pk = matched_order.receiver_pk,                                   buy_currency =matched_order.buy_currency, sell_currency = matched_order.sell_currency,                                   buy_amount = matched_order.buy_amount - order_obj.sell_amount,                                   sell_amount= (matched_order.buy_amount - order_obj.sell_amount) * matched_order.sell_amount / matched_order.buy_amount,                                  creator_id = matched_order.id)
+                #print("partially filled, matched_order.buy_amount>new_order.sell_amount, creator_id =", new_order.creator_id)
+                #txes.append(order_obj.id)
+                tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
+                txes.append(tx_obj)
+                g.session.add(tx_obj)
+                g.session.add(new_order)
                 g.session.commit()
                 
-        if order_match.buy_amount == order_obj.sell_amount:
+        if matched_order.buy_amount == order_obj.sell_amount:
                 tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
                 txes.append(tx_obj)
                 g.session.add(tx_obj)
