@@ -170,7 +170,7 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
     
     return eth_secretkey, eth_pk
   
-def fill_order(order, transactions=[]):
+def fill_order(order, txes=[]):
     # TODO: 
 
     order_obj = Order(receiver_pk=order['receiver_pk'],
@@ -182,10 +182,10 @@ def fill_order(order, transactions=[]):
     g.session.add(order_obj)
     g.session.commit()
 
-    order_match = g.session.query(Order).filter(Order.filled==None,
-                                                Order.sell_currency == order_obj.buy_currency,
-                                                Order.buy_currency == order_obj.sell_currency,
-                                                (Order.sell_amount / Order.buy_amount) >= (order_obj.buy_amount) / (order_obj.sell_amount)).first()
+    order_match = g.session.query(Order).filter(  Order.filled==None,
+                                                  Order.sell_currency == order_obj.buy_currency,
+                                                  Order.buy_currency == order_obj.sell_currency,
+                                                  (Order.sell_amount / Order.buy_amount) >= (order_obj.buy_amount) / (order_obj.sell_amount)).first()
 
 
     if order_match != None:
@@ -198,40 +198,36 @@ def fill_order(order, transactions=[]):
 
         #ORDER SELL AMOUNT AND BUY  
         if order_obj.sell_amount < order_match.buy_amount:
-                order_new = Order(creator_id = order_obj.id,
-                                  receiver_pk = order_obj.receiver_pk,
-                                  buy_amount = order_obj.buy_amount - order_match.sell_amount,
-                                  buy_currency = order_obj.buy_currency, sell_currency = order_obj.sell_currency,
-                                  sell_amount = (order_obj.buy_amount - order_match.sell_amount)* order_obj.sell_amount / order_obj.buy_amount,
-                                 )
+                order_new = Order(receiver_pk = order_obj.receiver_pk,\
+                                  buy_currency = order_obj.buy_currency, sell_currency = order_obj.sell_currency,\
+                                  buy_amount = order_obj.buy_amount - order_match.sell_amount,\
+                                  sell_amount = (order_obj.buy_amount - order_match.sell_amount)* order_obj.sell_amount / order_obj.buy_amount,\
+                                  creator_id = order_obj.id)
                 
-                transaction_object = TX(platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
-                transactions.append(transaction_object)
-                
-                g.session.add(transaction_object)
+                tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
+                txes.append(tx_obj)
+                g.session.add(tx_obj)
                 g.session.add(order_new)
-                
                 g.session.commit()
                   
-        if order_match.sell_amount < order_obj.sell_amount:
-                order_new = Order( creator_id = order_match.id,
-                                   buy_currency =order_match.buy_currency, sell_currency = order_match.sell_currency,                                   
-                                   buy_amount = order_match.buy_amount - order_obj.sell_amount,
-                                   receiver_pk = order_match.receiver_pk,
-                                   sell_amount= (order_match.buy_amount - order_obj.sell_amount) * order_match.sell_amount / order_match.buy_amount,                                  
-                                 )
-                
-                transaction_object = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
-                transactions.append(transaction_object)
-                
+        if order_match.buy_amount > order_obj.sell_amount:
+                order_new = Order(receiver_pk = order_match.receiver_pk,                                   
+                buy_currency =order_match.buy_currency, sell_currency = order_match.sell_currency,                                   
+                buy_amount = order_match.buy_amount - order_obj.sell_amount,                                   
+                sell_amount= (order_match.buy_amount - order_obj.sell_amount) * order_match.sell_amount / order_match.buy_amount,                                  
+                creator_id = order_match.id)
+                #print("partially filled, order_match.buy_amount>order_new.sell_amount, creator_id =", order_new.creator_id)
+                #txes.append(order_obj.id)
+                tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
+                txes.append(tx_obj)
+                g.session.add(tx_obj)
                 g.session.add(order_new)
-                g.session.add(transaction_object)
                 g.session.commit()
                 
         if order_match.buy_amount == order_obj.sell_amount:
-                transaction_object = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
-                transactions.append(transaction_object)
-                g.session.add(transaction_object)
+                tx_obj = TX( platform = order_obj.sell_currency, receiver_pk = order_obj.receiver_pk, order_id = order_obj.id, tx_id = order_obj.tx_id)
+                txes.append(tx_obj)
+                g.session.add(tx_obj)
                 g.session.commit()            
                 
     # Validate the order has a payment to back it (make sure the counterparty also made a payment)
@@ -252,25 +248,25 @@ def fill_order(order, transactions=[]):
             
     # Make sure that you end up executing all resulting transactions!
     
-    return transactions
+    return txes
   
-def execute_transactions(transactions):
-    if transactions is None:
+def execute_txes(txes):
+    if txes is None:
         return True
-    if len(transactions) == 0:
+    if len(txes) == 0:
         return True
-    print( f"Trying to execute {len(transactions)} transactions" )
-    print( f"IDs = {[tx['order_id'] for tx in transactions]}" )
+    print( f"Trying to execute {len(txes)} transactions" )
+    print( f"IDs = {[tx['order_id'] for tx in txes]}" )
 
     eth_sk, eth_pk = get_eth_keys()
     algo_sk, algo_pk = get_algo_keys()
     
-    if not all( tx['platform'] in ["Algorand","Ethereum"] for tx in transactions ):
-        print( "Error: execute_transactions got an invalid platform!" )
-        print( tx['platform'] for tx in transactions )
+    if not all( tx['platform'] in ["Algorand","Ethereum"] for tx in txes ):
+        print( "Error: execute_txes got an invalid platform!" )
+        print( tx['platform'] for tx in txes )
 
-    algo_transactions = [tx for tx in transactions if tx['platform'] == "Algorand" ]
-    eth_transactions = [tx for tx in transactions if tx['platform'] == "Ethereum" ]
+    algo_txes = [tx for tx in txes if tx['platform'] == "Algorand" ]
+    eth_txes = [tx for tx in txes if tx['platform'] == "Ethereum" ]
 
     # TODO: 
     #       1. Send tokens on the Algorand and eth testnets, appropriately
@@ -278,7 +274,7 @@ def execute_transactions(transactions):
     #       2. Add all transactions to the TX table
 
  
-    for algo_tx in algo_transactions:
+    for algo_tx in algo_txes:
         order_dict = {}
         order_dict['buy_currency'] = "Ethereum"
         order_dict['sell_currency'] = "Algorand"
@@ -288,12 +284,12 @@ def execute_transactions(transactions):
         order_dict['sell_amount'] = algo_tx['sell_amount']
         acl = connect_to_algo()
         order_dict['tx_id'] = send_tokens_algo(acl, algo_pk , algo_tx)
-        transactions.append(order_dict)
+        txes.append(order_dict)
           
         g.session.add(algo_tx_id)
         g.session.commit()
         
-    for eth_tx in eth_transactions:
+    for eth_tx in eth_txes:
         order_dict = {}
         order_dict['buy_currency'] = "Algorand"
         order_dict['sell_currency'] = "Ethereum"
@@ -303,7 +299,7 @@ def execute_transactions(transactions):
         order_dict['sell_amount'] = eth_tx['sell_amount']
         w3 = connect_to_eth()
         order_dict['tx_id'] = send_tokens_eth(w3, eth_sk, eth_tx) 
-        transactions.append(order_dict)
+        txes.append(order_dict)
   
         g.session.add(eth_tx)
         g.session.commit()
@@ -394,10 +390,10 @@ def trade():
 
 
         # 3b. Fill the order (as in Exchange Server II) if the order is valid
-            transactions = fill_order(order,transactions=[])
+            txes = fill_order(order,txes=[])
         
         # 4. Execute the transactions
-            execute_transactions(transactions)
+            execute_txes(txes)
         # If all goes well, return jsonify(True). else return jsonify(False)
             return jsonify(True)
         else:
