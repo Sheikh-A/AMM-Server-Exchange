@@ -155,11 +155,12 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
     w3 = Web3()
     w3.eth.account.enable_unaudited_hdwallet_features()
     acct,mnemonic_secret = w3.eth.account.create_with_mnemonic()
-    print(acct)
-    print(mnemonic_secret)
+    # print(acct)
+    # print(mnemonic_secret)
 
 
     # TODO: Generate or read (using the mnemonic secret) 
+    #MNEMOCIN
     mnemonic_secret = "song funny orchard upon glide burden section cherry glance nice chef drift"
     
     
@@ -172,11 +173,12 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
 def fill_order(order, txes=[]):
     # TODO: 
 
-    order_obj = Order(receiver_pk=order['receiver_pk'],\
-                      sell_currency=order['sell_currency'],\
-                      buy_currency=order['buy_currency'],\
-                      buy_amount=order['buy_amount'],\
-                      sell_amount=order['sell_amount'] )
+    order_obj = Order(receiver_pk=order['receiver_pk'],
+                      sell_currency=order['sell_currency'],
+                      buy_currency=order['buy_currency'],
+                      sell_amount=order['sell_amount'],
+                      buy_amount=order['buy_amount'],
+                     )
     g.session.add(order_obj)
     g.session.commit()
 
