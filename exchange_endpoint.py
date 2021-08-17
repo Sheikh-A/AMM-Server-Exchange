@@ -144,12 +144,10 @@ def valid_signature(payload,sig):
 def get_algo_keys():
     
     # TODO: Generate or read (using the mnemonic secret) 
-    # the algorand public/private keys
-    # mnemonic_secret = "YOUR MNEMONIC HERE"
-    #sk, address = account.generate_account()
+
     mnemonic_secret = 'sure example memory during already cloth forward party amused cycle deputy knock fiction spray try divert sick embody lamp organ reward cook similar absorb cheap' 
+    algo_pk = mnemonic.to_public_key(mnemonic_secret)
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
-    algo_pk = mnemonic.to_public_key(mnemonic_secret)    
     return algo_sk, algo_pk
 
 
@@ -158,13 +156,14 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
     w3.eth.account.enable_unaudited_hdwallet_features()
 
     # TODO: Generate or read (using the mnemonic secret) 
-    # the ethereum public/private keys
     mnemonic_secret = "song funny orchard upon glide burden section cherry glance nice chef drift"
-    #acct,mnemonic_secret = w3.eth.account.create_with_mnemonic()
+    
+    
     acct = w3.eth.account.from_mnemonic(mnemonic_secret)
+    eth_secretkey = acct._private_key.hex()
     eth_pk = acct._address
-    eth_sk = acct._private_key.hex()
-    return eth_sk, eth_pk
+    
+    return eth_secretkey, eth_pk
   
 def fill_order(order, txes=[]):
     # TODO: 
