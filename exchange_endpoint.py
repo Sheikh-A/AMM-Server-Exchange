@@ -151,7 +151,7 @@ def get_keys():
 
 
 def get_algo_keys():
-    mnemonic_secret = "opinion luxury security private power sponsor coast explain fault project gossip garden cupboard fly squirrel motion drop estate decade symptom lion danger smoke abandon green"
+    mnemonic_secret = "chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble"
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
     algo_pk = mnemonic.to_public_key(mnemonic_secret)
     return algo_sk, algo_pk
