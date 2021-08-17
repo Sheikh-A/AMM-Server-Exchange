@@ -105,9 +105,9 @@ def connect_to_blockchains():
 
 
 """ Helper Methods (skeleton code for you to implement) """
-def check_sig(payload,sig):
+def signature_valid(payload,sig):
     #1. Verifying an endpoint for verifying signatures for ethereum
-    result_check_sig = False
+    result_signature_valid = False
     platform = payload['platform']
     sk = sig
     pk = payload['pk']
@@ -117,21 +117,21 @@ def check_sig(payload,sig):
         eth_encoded_msg = eth_account.messages.encode_defunct(text=message)
         recovered_pk = eth_account.Account.recover_message(eth_encoded_msg,signature=sk)
         if(recovered_pk == pk):
-            result_check_sig = True
+            result_signature_valid = True
             #print( "Eth sig verifies!" )    
     
         #2. Verifying an endpoint for verifying signatures for Algorand
     elif platform == "Algorand":
-        result_check_sig = algosdk.util.verify_bytes(message.encode('utf-8'),sk,pk)
-        if(result_check_sig):
+        result_signature_valid = algosdk.util.verify_bytes(message.encode('utf-8'),sk,pk)
+        if(result_signature_valid):
             #print( "Algo sig verifies!" )
-            result_check_sig = True
+            result_signature_valid = True
     
         #3. Check for invalid input
     else:
         print("invalid input")
-    #print(" this is jsonify(result_check_sig) = ",jsonify(result_check_sig))
-    return jsonify(result_check_sig)
+    #print(" this is jsonify(result_signature_valid) = ",jsonify(result_signature_valid))
+    return jsonify(result_signature_valid)
 
 
 def log_message(message_dict):
@@ -366,7 +366,7 @@ def trade():
         result_check = False
         payload = content['payload']
         sig = content['sig']
-        result_check = check_sig(payload,sig)
+        result_check = signature_valid(payload,sig)
         
         # 2. Add the order to the table
         if(result_check):
