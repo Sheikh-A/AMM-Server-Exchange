@@ -147,9 +147,7 @@ def get_algo_keys():
     # the algorand public/private keys
     # mnemonic_secret = "YOUR MNEMONIC HERE"
     #sk, address = account.generate_account()
-    mnemonic_secret = 'ship floor pattern transfer fiscal diamond maid raise never debate lemon brown siren upset gun sibling lend write cloth success glove shrug cattle ability ivory' 
-    algo_sk = mnemonic.to_private_key(mnemonic_secret)
-    algo_pk = mnemonic.to_public_key(mnemonic_secret)    
+    algo_sk, algo_pk = algosdk.account.generate_account()  
     return algo_sk, algo_pk
 
 
