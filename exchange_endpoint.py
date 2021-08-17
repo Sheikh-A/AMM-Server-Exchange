@@ -145,7 +145,7 @@ def get_algo_keys():
     
     # TODO: Generate or read (using the mnemonic secret) 
 
-    mnemonic_secret = 'sure example memory during already cloth forward party amused cycle deputy knock fiction spray try divert sick embody lamp organ reward cook similar absorb cheap' 
+    mnemonic_secret = 'ship floor pattern transfer fiscal diamond maid raise never debate lemon brown siren upset gun sibling lend write cloth success glove shrug cattle ability ivory' 
     algo_pk = mnemonic.to_public_key(mnemonic_secret)
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
     return algo_sk, algo_pk
@@ -154,6 +154,7 @@ def get_algo_keys():
 def get_eth_keys(filename = "eth_mnemonic.txt"):
     w3 = Web3()
     w3.eth.account.enable_unaudited_hdwallet_features()
+
 
     # TODO: Generate or read (using the mnemonic secret) 
     mnemonic_secret = "song funny orchard upon glide burden section cherry glance nice chef drift"
@@ -168,12 +169,11 @@ def get_eth_keys(filename = "eth_mnemonic.txt"):
 def fill_order(order, txes=[]):
     # TODO: 
 
-    order_obj = Order(receiver_pk=order['receiver_pk'],
-                      sell_currency=order['sell_currency'],
-                      buy_currency=order['buy_currency'],
-                      sell_amount=order['sell_amount']
-                      buy_amount=order['buy_amount'],
-                    )
+    order_obj = Order(receiver_pk=order['receiver_pk'],\
+                      sell_currency=order['sell_currency'],\
+                      buy_currency=order['buy_currency'],\
+                      buy_amount=order['buy_amount'],\
+                      sell_amount=order['sell_amount'] )
     g.session.add(order_obj)
     g.session.commit()
 
