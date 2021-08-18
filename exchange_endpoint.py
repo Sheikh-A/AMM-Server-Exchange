@@ -354,7 +354,7 @@ def trade():
             fill_order(full_order,transaction_get)
             execute_txes(transaction_get)
         else:
-            print("check code")
+            pass
     return jsonify(True)
 
 
