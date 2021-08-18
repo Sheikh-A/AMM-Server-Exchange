@@ -198,28 +198,40 @@ def fill_order(order, txes=[]):
         #Create next order        
         order_next = None
 
-        if order_current.buy_amount > order.sell_amount:
+        if order.sell_amount < order_current.buy_amount:
+            #create next order
             order_next = Order()
-            differ = order_current.buy_amount - order.sell_amount
-            order_next.buy_amount = differ
-            sell_amount = differ * order_current.sell_amount / order_current.buy_amount
-            order_next.sell_amount = sell_amount
+            
+            delta = (order_current.buy_amount - order.sell_amount)
             order_next.creator_id = order_current.id
-            order_next.sell_currency = order_current.sell_currency
+            order_next.buy_amount = delta
+            #Sell amount
+            sell_amount = delta * order_current.sell_amount / order_current.buy_amount
+            order_next.sell_amount = sell_amount
+            #Currency
             order_next.buy_currency = order_current.buy_currency
-            order_next.receiver_pk = order_current.receiver_pk
+            order_next.sell_currency = order_current.sell_currency
+            #Send            
             order_next.sender_pk = order_current.sender_pk
-        if order_current.buy_amount < order.sell_amount:
+            order_next.receiver_pk = order_current.receiver_pk
+            
+        if  order.sell_amount > order_current.buy_amount:
             order_next = Order()
-            differ = order.sell_amount - order_current.buy_amount
-            order_next.sell_amount = differ
-            buy_amount = differ * order.buy_amount / order.sell_amount
-            order_next.buy_amount = buy_amount
+            #subtract
             order_next.creator_id = order.id
-            order_next.sell_currency = order.sell_currency
-            order_next.buy_currency = order.buy_currency
+            delta = order.sell_amount - order_current.buy_amount
+
+            buy_amount = ((delta * order.buy_amount) / order.sell_amount)
+            
+            order_next.buy_amount = buy_amount
+            order_next.sell_amount = delta
+            
             order_next.receiver_pk = order.receiver_pk
             order_next.sender_pk = order.sender_pk
+            
+            order_next.sell_currency = order.sell_currency
+            order_next.buy_currency = order.buy_currency
+            
         if order_next != None:
             g.session().add(order_next)
         g.session().commit()
