@@ -26,7 +26,7 @@ def connect_to_algo(connection_type=''):
 
 def send_tokens_algo( acl, sender_sk, txes):
     params = acl.suggested_params
-    #Last Pram
+    #Last Param
     params.last = 800 + params.first  
     
     mnemonic_secret = from_private_key(sender_sk)

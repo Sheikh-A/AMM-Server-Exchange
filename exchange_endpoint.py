@@ -110,21 +110,6 @@ def log_message(message_dict):
     session.add(obj)
     session.commit()
 
-# def time_stop_algo(c, token_id):
-#     wait_num = c.status().get('last-round')
-#     token_data = c.pending_transaction_info(token_id)
-#     while not (token_data.get('confirmed-round') and token_data.get('confirmed-round') > 0):
-#         print("Waiting for confirmation")
-#         wait_num += 1
-#         c.status_after_block(wait_num)
-#         token_data = c.pending_transaction_info(token_id)
-#     print("Transaction {} confirmed in round {}.".format(token_id, token_data.get('confirmed-round')))
-#     return token_data
-
-
-
-
-
 def get_eth_keys(filename="eth_mnemonic.txt"):
     # TODO: Generate or read (using the mnemonic secret)
     eth_mnemonic = "song funny orchard upon glide burden section cherry glance nice chef drift"
@@ -398,7 +383,7 @@ def order_book():
                 
         order_dict['signature'] = item.signature      
         array_data.append(order_dict)
-        
+
     order_dictionary["data"] = array_data
     return jsonify(order_dictionary)
 
