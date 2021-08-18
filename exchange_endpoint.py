@@ -377,24 +377,30 @@ def trade():
 def order_book():
     fields = ["buy_currency", "sell_currency", "buy_amount", "sell_amount", "signature", "tx_id", "receiver_pk"]
 
-    # Same as before
-    result = {}
+    order_dictionary = {}
+
     session = g.session()
     data = session.query(Order).all()
-    datas = []
-    for obj in data:
+    array_data = []
+    for item in data:
         order_dict = {}
-        order_dict['sender_pk'] = obj.sender_pk
-        order_dict['receiver_pk'] = obj.receiver_pk
-        order_dict['buy_currency'] = obj.buy_currency
-        order_dict['sell_currency'] = obj.sell_currency
-        order_dict['buy_amount'] = obj.buy_amount
-        order_dict['sell_amount'] = obj.sell_amount
-        order_dict['signature'] = obj.signature
-        order_dict['tx_id'] = obj.tx_id
-        datas.append(order_dict)
-    result["data"] = datas
-    return jsonify(result)
+        
+        order_dict['tx_id'] = item.tx_id
+
+        order_dict['buy_currency'] = item.buy_currency
+        order_dict['sell_currency'] = item.sell_currency
+
+        order_dict['receiver_pk'] = item.receiver_pk
+        order_dict['sender_pk'] = item.sender_pk
+        
+        order_dict['sell_amount'] = item.sell_amount
+        order_dict['buy_amount'] = item.buy_amount
+                
+        order_dict['signature'] = item.signature      
+        array_data.append(order_dict)
+        
+    order_dictionary["data"] = array_data
+    return jsonify(order_dictionary)
 
 
 if __name__ == '__main__':
