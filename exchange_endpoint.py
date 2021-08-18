@@ -173,9 +173,23 @@ def signature_verify(payload, sig):
     return correct_input
 
 
+def matched_orders(order):
+    session = g.session()
+    data = order.buy_amount / order.sell_amount
+    orderinfo = session.query(Order).filter(Order.filled == None,order.sell_currency == Order.buy_currency, order.buy_currency == Order.sell_currency).all()
+    order_dictionary = []
+    if len(orderinfo) > 0:
+        for item in orderinfo:
+            stepfunction = item.sell_amount / item.buy_amount
+            if data <= stepfunction:
+                #Append item
+                order_dictionary.append(item)
+    #retutrn order_dictionary
+    return order_dictionary
+
 def fill_order(order, txes=[]):
     # TODO: 
-    data = get_all_match_orders(order)
+    data = matched_orders(order)
     #check if data > 0
     if len(data) < 0:
         print("check input")
@@ -237,27 +251,7 @@ def fill_order(order, txes=[]):
         g.session().commit()
 
 
-def get_all_match_orders(order):
-    """
-    get all matched orders
-    :param order:
-    :return:list
-    """
-    # existing_order.buy_currency == order.sell_currency
-    # existing_order.sell_currency == order.buy_currency
-    # taker
-    session = g.session()
-    cur_res = order.buy_amount / order.sell_amount
-    res = session.query(Order).filter(Order.filled == None, Order.buy_currency == order.sell_currency,
-                                      Order.sell_currency == order.buy_currency).all()
-    result = []
-    if len(res) > 0:
-        for obj in res:
-            # maker
-            tmp_res = obj.sell_amount / obj.buy_amount
-            if tmp_res >= cur_res:
-                result.append(obj)
-    return result
+
 
 
 def insert_order(payload, sig):
