@@ -111,7 +111,7 @@ def log_message(message_dict):
 
     # TODO: Add message to the Log table
     #Add Session
-    g.session.add(log(message = msg))
+    g.session.add(jsonify(log(message = msg)))
     #Add Commit
     g.session.commit()
     
