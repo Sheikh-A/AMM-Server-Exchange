@@ -187,6 +187,29 @@ def matched_orders(order):
     #retutrn order_dictionary
     return order_dictionary
 
+def add_order(p, signature):
+    session = g.session()
+    order_dict = {}
+    order_dict['signature'] = signature
+
+    order_dict['buy_currency'] = p['buy_currency']
+    order_dict['sell_currency'] = p['sell_currency']
+
+    order_dict['sender_pk'] = p['sender_pk']
+    order_dict['receiver_pk'] = p['receiver_pk']
+
+    order_dict['buy_amount'] = p['buy_amount']
+    order_dict['sell_amount'] = p['sell_amount']
+    
+    order_data = Order()
+
+    for item in order_dict.keys():
+        order_data.__setattr__(item, order_dict[item])
+    
+    session.add(order_data)
+    session.commit()
+    return order_data
+
 def fill_order(order, txes=[]):
     # TODO: 
     data = matched_orders(order)
@@ -251,34 +274,12 @@ def fill_order(order, txes=[]):
         g.session().commit()
 
 
-
-
-
-def insert_order(payload, sig):
-    session = g.session()
-    order_dict = {}
-    order_dict['sender_pk'] = payload['sender_pk']
-    order_dict['receiver_pk'] = payload['receiver_pk']
-    order_dict['buy_currency'] = payload['buy_currency']
-    order_dict['sell_currency'] = payload['sell_currency']
-    order_dict['buy_amount'] = payload['buy_amount']
-    order_dict['sell_amount'] = payload['sell_amount']
-    order_dict['signature'] = sig
-    obj = Order()
-    for r in order_dict.keys():
-        obj.__setattr__(r, order_dict[r])
-    session.add(obj)
-    session.commit()
-    return obj
-
-
 def execute_txes(txes):
-    if txes is None:
+    if (len(txes) == 0) or (txes is None):
         return True
-    if len(txes) == 0:
-        return True
-    print(f"Trying to execute {len(txes)} transactions")
-    print(f"IDs = {[tx['order_id'] for tx in txes]}")
+    # print(f"Trying to execute {len(txes)} transactions")
+    # print(f"IDs = {[tx['order_id'] for tx in txes]}")
+    
     eth_sk, eth_pk = get_eth_keys()
     sk_algo, pk_algo = get_algo_keys()
     if not all(tx['platform'] in ["Algorand", "Ethereum"] for tx in txes):
@@ -355,7 +356,7 @@ def trade():
         # 2. Add the order to the table
         order = None
         if check_flag:
-            order = insert_order(payload, sig)
+            order = add_order(payload, sig)
         else:
             return jsonify(False)
         # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
