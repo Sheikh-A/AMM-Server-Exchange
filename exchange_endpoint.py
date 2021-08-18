@@ -287,12 +287,7 @@ def execute_txes(txes):
     eth_transactions = [tokens for tokens in txes if tokens['platform'] == "Ethereum"]
     #Algo
     algo_transactions = [tokens for tokens in txes if tokens['platform'] == "Algorand"]
-    
-    algo_txids=send_tokens_algo(g.acl, sk_algo, algo_transactions)
-    eth_txids=send_tokens_eth(g.w3, eth_sk, eth_transactions)
 
-
-""" End of Helper methods"""
 
 
 @app.route('/address', methods=['POST'])
@@ -305,13 +300,10 @@ def address():
         if not content['platform'] in ["Ethereum", "Algorand"]:
             print(f"Error: {content['platform']} is an invalid platform")
             return jsonify(f"Error: invalid platform provided: {content['platform']}")
-
         if content['platform'] == "Ethereum":
-            # Your code here
             eth_sk, eth_pk = get_eth_keys()
             return jsonify(eth_pk)
         if content['platform'] == "Algorand":
-            # Your code here
             sk_algo, pk_algo = get_algo_keys()
             return jsonify(pk_algo)
 
@@ -344,38 +336,36 @@ def trade():
             print(json.dumps(content))
             return jsonify(False)
 
-        # Your code here
-        # 1. Check the signature
-        sig = content["sig"]
         payload = content["payload"]
-        check_flag = signature_verify(payload, sig)
+        correct_signature = content["sig"]
+        check_error = signature_verify(payload, correct_signature)
         # 2. Add the order to the table
-        order = None
-        if check_flag:
-            order = add_order(payload, sig)
+        full_order = None
+        if check_error:
+            full_order = add_order(payload, correct_signature)
         else:
             return jsonify(False)
         # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
         check_tx=False
         get_tx=None
         if payload["platform"] == '':
-            get_tx = g.w3.eth.get_transaction(order.tx_id)
+            get_tx = g.w3.eth.get_transaction(full_order.tx_id)
             if get_tx == None:
                 return jsonify(False)
             else:
-                if get_tx['to'] == order.receiver_pk and get_tx['value'] == order.sell_amount:
+                if get_tx['to'] == full_order.receiver_pk and get_tx['value'] == full_order.sell_amount:
                     check_tx=True
         if payload["platform"] == 'Algorand':
             icl = connect_to_algo(connection_type='indexer')
-            get_tx=icl.search_transaction(order.tx_id)
+            get_tx=icl.search_transaction(full_order.tx_id)
             for tx in get_tx['transactions']:
                 if 'payment-transaction' in tx.keys():
-                    if tx['payment-transaction']['amount'] == order.sell_amount and tx['payment-transaction'][
-                        'receiver'] == order.receiver_pk:
+                    if tx['payment-transaction']['amount'] == full_order.sell_amount and tx['payment-transaction'][
+                        'receiver'] == full_order.receiver_pk:
                         check_tx=True
         # 3b. Fill the order (as in Exchange Server II) if the order is valid
         if check_tx:
-            fill_order(order,get_tx)
+            fill_order(full_order,get_tx)
         # 4. Execute the transactions
             execute_txes(get_tx)
         # If all goes well, return jsonify(True). else return jsonify(False)
