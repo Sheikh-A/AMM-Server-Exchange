@@ -175,46 +175,53 @@ def signature_verify(payload, sig):
 
 def fill_order(order, txes=[]):
     # TODO: 
-    # Match orders (same as Exchange Server II)
-    # Validate the order has a payment to back it (make sure the counterparty also made a payment)
-    # Make sure that you end up executing all resulting transactions!
-    result = get_all_match_orders(order)
-    if len(result) > 0:
-        sorted(result, key=lambda o: o.sell_amount, reverse=True)
-        existing_order = result[0]
-        # Set the filled field to be the current timestamp on both orders
-        current_time = datetime.now()
-        existing_order.filled = current_time
-        order.filled = current_time
-        # Set counterparty_id to be the id of the other order
-        order.counterparty_id = existing_order.id
-        existing_order.counterparty_id = order.id
-        # Create a new order for remaining balance
-        new_order = None
-        if existing_order.buy_amount > order.sell_amount:
-            new_order = Order()
-            differ = existing_order.buy_amount - order.sell_amount
-            new_order.buy_amount = differ
-            sell_amount = differ * existing_order.sell_amount / existing_order.buy_amount
-            new_order.sell_amount = sell_amount
-            new_order.creator_id = existing_order.id
-            new_order.sell_currency = existing_order.sell_currency
-            new_order.buy_currency = existing_order.buy_currency
-            new_order.receiver_pk = existing_order.receiver_pk
-            new_order.sender_pk = existing_order.sender_pk
-        if existing_order.buy_amount < order.sell_amount:
-            new_order = Order()
-            differ = order.sell_amount - existing_order.buy_amount
-            new_order.sell_amount = differ
+    data = get_all_match_orders(order)
+    #check if data > 0
+    if len(data) < 0:
+        print("check input")
+        pass
+    if len(data) > 0:
+        #sort data
+        sorted(data,key=lambda o:o.sell_amount,reverse=True)
+        
+        #first order
+        order_current = data[0]
+        timestamp = datetime.now()
+        
+        order.filled = timestamp
+        order_current.filled = timestamp
+        
+        #Flip metrics
+        order.counterparty_id = order_current.id
+        order_current.counterparty_id = order.id
+        
+        #Create next order        
+        order_next = None
+
+        if order_current.buy_amount > order.sell_amount:
+            order_next = Order()
+            differ = order_current.buy_amount - order.sell_amount
+            order_next.buy_amount = differ
+            sell_amount = differ * order_current.sell_amount / order_current.buy_amount
+            order_next.sell_amount = sell_amount
+            order_next.creator_id = order_current.id
+            order_next.sell_currency = order_current.sell_currency
+            order_next.buy_currency = order_current.buy_currency
+            order_next.receiver_pk = order_current.receiver_pk
+            order_next.sender_pk = order_current.sender_pk
+        if order_current.buy_amount < order.sell_amount:
+            order_next = Order()
+            differ = order.sell_amount - order_current.buy_amount
+            order_next.sell_amount = differ
             buy_amount = differ * order.buy_amount / order.sell_amount
-            new_order.buy_amount = buy_amount
-            new_order.creator_id = order.id
-            new_order.sell_currency = order.sell_currency
-            new_order.buy_currency = order.buy_currency
-            new_order.receiver_pk = order.receiver_pk
-            new_order.sender_pk = order.sender_pk
-        if new_order != None:
-            g.session().add(new_order)
+            order_next.buy_amount = buy_amount
+            order_next.creator_id = order.id
+            order_next.sell_currency = order.sell_currency
+            order_next.buy_currency = order.buy_currency
+            order_next.receiver_pk = order.receiver_pk
+            order_next.sender_pk = order.sender_pk
+        if order_next != None:
+            g.session().add(order_next)
         g.session().commit()
 
 
