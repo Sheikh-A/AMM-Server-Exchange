@@ -121,38 +121,37 @@ def log_message(message_dict):
 #     print("Transaction {} confirmed in round {}.".format(token_id, token_data.get('confirmed-round')))
 #     return token_data
 
-#Start with ETH easier
+
+
+
+
 def get_eth_keys(filename="eth_mnemonic.txt"):
     # TODO: Generate or read (using the mnemonic secret)
-    # the ethereum public/private keys
     eth_mnemonic = "song funny orchard upon glide burden section cherry glance nice chef drift"
-    
-    #Data insturctions
     w3 = Web3()
     w3.eth.account.enable_unaudited_hdwallet_features()
-    acct = w3.eth.account.from_mnemonic(eth_mnemonic)
     
-    #Private Key
+    acct = w3.eth.account.from_mnemonic(eth_mnemonic)
+    #PK SK
     eth_sk = acct._private_key.hex()
-    #Sekret
     eth_pk = acct._address
-    #print(sk)
-    #print(pk)
+    # print(sk)
+    # print(pk)
     return eth_sk, eth_pk
-
 
 def get_algo_keys():
     # TODO: Generate or read (using the mnemonic secret)
     mnemonic_secret = "chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble"
-    #PK
-    algo_pk = account.address_from_private_key(algo_sk)
-    #SK
-    algo_sk = mnemonic.to_private_key(mnemonic_secret)
-    #Return
-    return algo_sk, algo_pk
+    
+    #MNE
+    sk_algo = mnemonic.to_private_key(mnemonic_secret)
+    #PRIVATE
+    pk_algo = account.address_from_private_key(sk_algo)
+    
+    return sk_algo, pk_algo
 
 
-def verify_signature(payload, sig):
+def check_sig(payload, sig):
     platform = payload["platform"]
     sender_pk = payload["sender_pk"]
     sig_right = False
@@ -264,7 +263,7 @@ def execute_txes(txes):
     print(f"Trying to execute {len(txes)} transactions")
     print(f"IDs = {[tx['order_id'] for tx in txes]}")
     eth_sk, eth_pk = get_eth_keys()
-    algo_sk, algo_pk = get_algo_keys()
+    sk_algo, pk_algo = get_algo_keys()
     if not all(tx['platform'] in ["Algorand", "Ethereum"] for tx in txes):
         print("Error: execute_txes got an invalid platform!")
         print(tx['platform'] for tx in txes)
@@ -275,7 +274,7 @@ def execute_txes(txes):
     #       1. Send tokens on the Algorand and eth testnets, appropriately
     #          We've provided the send_tokens_algo and send_tokens_eth skeleton methods in send_tokens.py
     #       2. Add all transactions to the TX table
-    algo_txids=send_tokens_algo(g.acl, algo_sk, algo_txes)
+    algo_txids=send_tokens_algo(g.acl, sk_algo, algo_txes)
     eth_txids=send_tokens_eth(g.w3, eth_sk, eth_txes)
 
 
@@ -299,8 +298,8 @@ def address():
             return jsonify(eth_pk)
         if content['platform'] == "Algorand":
             # Your code here
-            algo_sk, algo_pk = get_algo_keys()
-            return jsonify(algo_pk)
+            sk_algo, pk_algo = get_algo_keys()
+            return jsonify(pk_algo)
 
 
 @app.route('/trade', methods=['POST'])
@@ -335,7 +334,7 @@ def trade():
         # 1. Check the signature
         sig = content["sig"]
         payload = content["payload"]
-        check_flag = verify_signature(payload, sig)
+        check_flag = check_sig(payload, sig)
         # 2. Add the order to the table
         order = None
         if check_flag:
