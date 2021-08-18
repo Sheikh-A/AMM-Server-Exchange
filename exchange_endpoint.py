@@ -105,85 +105,88 @@ def connect_to_blockchains():
 
 
 """ Helper Methods (skeleton code for you to implement) """
-def check_sig(payload,sig):
-    #1. Verifying an endpoint for verifying signatures for ethereum
-    result_check_sig = False
-    platform = payload['platform']
-    sk = sig
-    pk = payload['pk']
-    message = json.dumps(payload)
-    
-    if platform == "Ethereum":
-        eth_encoded_msg = eth_account.messages.encode_defunct(text=message)
-        recovered_pk = eth_account.Account.recover_message(eth_encoded_msg,signature=sk)
-        if(recovered_pk == pk):
-            result_check_sig = True
-            #print( "Eth sig verifies!" )    
-    
-        #2. Verifying an endpoint for verifying signatures for Algorand
-    elif platform == "Algorand":
-        result_check_sig = algosdk.util.verify_bytes(message.encode('utf-8'),sk,pk)
-        if(result_check_sig):
-            #print( "Algo sig verifies!" )
-            result_check_sig = True
-    
-        #3. Check for invalid input
-    else:
-        print("invalid input")
-    #print(" this is jsonify(result_check_sig) = ",jsonify(result_check_sig))
-    return jsonify(result_check_sig)
-
 
 def log_message(message_dict):
     msg = json.dumps(message_dict)
 
     # TODO: Add message to the Log table
+    #Add Session
     g.session.add(log(message = msg))
+    #Add Commit
     g.session.commit()
     
     return
 
+def valid_signature(payload,sig):
+    result_valid_signature = False
+    platform = payload['platform']
+
+    pk = payload['pk']
+    sk = sig
+    
+    message = json.dumps(payload)
+    
+    if platform == "Algorand":
+        result_valid_signature = algosdk.util.verify_bytes(message.encode('utf-8'),sk,pk)
+        if(result_valid_signature):
+            result_valid_signature = True
+    
+    elif platform == "Ethereum":
+        eth_encoded_msg = eth_account.messages.encode_defunct(text=message)
+        recovered_pk = eth_account.Account.recover_message(eth_encoded_msg,signature=sk)
+        if(recovered_pk == pk):
+            result_valid_signature = True
+    else:
+        print("INVALID CHECK")
+    #Return Result    
+    return jsonify(result_valid_signature)
+
 def get_algo_keys():
     
     # TODO: Generate or read (using the mnemonic secret) 
-    # the algorand public/private keys
-    # mnemonic_secret = "YOUR MNEMONIC HERE"
-    #sk, address = account.generate_account()
-    mnemonic_secret = 'chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble' 
+
+    mnemonic_secret = 'chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble'
+    #Public Key
+    algo_pk = mnemonic.to_public_key(mnemonic_secret)
+    #Private Key
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
-    algo_pk = mnemonic.to_public_key(mnemonic_secret)    
     return algo_sk, algo_pk
 
 
 def get_eth_keys(filename = "eth_mnemonic.txt"):
     w3 = Web3()
     w3.eth.account.enable_unaudited_hdwallet_features()
+    acct,mnemonic_secret = w3.eth.account.create_with_mnemonic()
+    # print(acct)
+    # print(mnemonic_secret)
+
 
     # TODO: Generate or read (using the mnemonic secret) 
-    # the ethereum public/private keys
+    #MNEM PHASE
     mnemonic_secret = "song funny orchard upon glide burden section cherry glance nice chef drift"
-    #acct,mnemonic_secret = w3.eth.account.create_with_mnemonic()
+    
+    
     acct = w3.eth.account.from_mnemonic(mnemonic_secret)
+    #SEcrt
+    eth_secretkey = acct._private_key.hex()
+    #public
     eth_pk = acct._address
-    eth_sk = acct._private_key.hex()
-    return eth_sk, eth_pk
+    
+    return eth_secretkey, eth_pk
   
 def fill_order(order, txes=[]):
     # TODO: 
-    # Match orders (same as Exchange Server II)
-    #1.Insert the order
-    order_obj = Order(receiver_pk=order['receiver_pk'],\
-                      buy_currency=order['buy_currency'],\
-                      sell_currency=order['sell_currency'],\
-                      buy_amount=order['buy_amount'],\
+    order_obj = Order(receiver_pk=order['receiver_pk'],
+                      sell_currency=order['sell_currency'],
+                      buy_currency=order['buy_currency'],
+                      buy_amount=order['buy_amount'],
                       sell_amount=order['sell_amount'] )
     g.session.add(order_obj)
     g.session.commit()
 
-    #2.Check if there are any existing orders that match
-    matched_order = g.session.query(Order).filter(Order.filled==None,\
-                                                  Order.buy_currency == order_obj.sell_currency,\
-                                                  Order.sell_currency == order_obj.buy_currency,\
+    matched_order = g.session.query(Order).filter(Order.filled==None,
+                                                  Order.buy_currency == order_obj.sell_currency,
+                                                  Order.sell_currency == order_obj.buy_currency,
                                                   Order.sell_amount/Order.buy_amount >= order_obj.buy_amount/order_obj.sell_amount).first()
     
     #3. if a match is found
@@ -366,7 +369,7 @@ def trade():
         result_check = False
         payload = content['payload']
         sig = content['sig']
-        result_check = check_sig(payload,sig)
+        result_check = valid_signature(payload,sig)
         
         # 2. Add the order to the table
         if(result_check):
@@ -424,10 +427,13 @@ def order_book():
     #print(result_order_book) 
     #print(" this is jsonify(result_order_book) = ",jsonify(result_order_book))
     return jsonify(result_order_book)
-    pass
+    
 
 if __name__ == '__main__':
     app.run(port='5002')
 
 
 # In[12]:
+
+
+
