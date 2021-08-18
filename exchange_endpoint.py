@@ -121,29 +121,38 @@ def log_message(message_dict):
 #     print("Transaction {} confirmed in round {}.".format(token_id, token_data.get('confirmed-round')))
 #     return token_data
 
-
-def get_algo_keys():
-    # TODO: Generate or read (using the mnemonic secret)
-    # the algorand public/private keys
-    mnemonic_secret = "chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble"
-    algo_sk = mnemonic.to_private_key(mnemonic_secret)
-    algo_pk = account.address_from_private_key(algo_sk)
-    return algo_sk, algo_pk
-
-
+#Start with ETH easier
 def get_eth_keys(filename="eth_mnemonic.txt"):
     # TODO: Generate or read (using the mnemonic secret)
     # the ethereum public/private keys
     eth_mnemonic = "song funny orchard upon glide burden section cherry glance nice chef drift"
+    
+    #Data insturctions
     w3 = Web3()
     w3.eth.account.enable_unaudited_hdwallet_features()
     acct = w3.eth.account.from_mnemonic(eth_mnemonic)
-    eth_pk = acct._address
+    
+    #Private Key
     eth_sk = acct._private_key.hex()
+    #Sekret
+    eth_pk = acct._address
+    #print(sk)
+    #print(pk)
     return eth_sk, eth_pk
 
 
-def check_sig(payload, sig):
+def get_algo_keys():
+    # TODO: Generate or read (using the mnemonic secret)
+    mnemonic_secret = "chuckle welcome exchange bless pink segment brand patrol salon aerobic other will present banana bachelor dream almost noble melt alien enter excess during ability trouble"
+    #PK
+    algo_pk = account.address_from_private_key(algo_sk)
+    #SK
+    algo_sk = mnemonic.to_private_key(mnemonic_secret)
+    #Return
+    return algo_sk, algo_pk
+
+
+def verify_signature(payload, sig):
     platform = payload["platform"]
     sender_pk = payload["sender_pk"]
     sig_right = False
@@ -326,7 +335,7 @@ def trade():
         # 1. Check the signature
         sig = content["sig"]
         payload = content["payload"]
-        check_flag = check_sig(payload, sig)
+        check_flag = verify_signature(payload, sig)
         # 2. Add the order to the table
         order = None
         if check_flag:
