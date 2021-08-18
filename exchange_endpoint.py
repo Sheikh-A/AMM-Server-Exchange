@@ -110,16 +110,16 @@ def log_message(message_dict):
     session.add(obj)
     session.commit()
 
-def time_stop_algo(c, token_id):
-    wait_num = c.status().get('last-round')
-    token_data = c.pending_transaction_info(token_id)
-    while not (token_data.get('confirmed-round') and token_data.get('confirmed-round') > 0):
-        print("Waiting for confirmation")
-        wait_num += 1
-        c.status_after_block(wait_num)
-        token_data = c.pending_transaction_info(token_id)
-    print("Transaction {} confirmed in round {}.".format(token_id, token_data.get('confirmed-round')))
-    return token_data
+# def time_stop_algo(c, token_id):
+#     wait_num = c.status().get('last-round')
+#     token_data = c.pending_transaction_info(token_id)
+#     while not (token_data.get('confirmed-round') and token_data.get('confirmed-round') > 0):
+#         print("Waiting for confirmation")
+#         wait_num += 1
+#         c.status_after_block(wait_num)
+#         token_data = c.pending_transaction_info(token_id)
+#     print("Transaction {} confirmed in round {}.".format(token_id, token_data.get('confirmed-round')))
+#     return token_data
 
 
 def get_algo_keys():
