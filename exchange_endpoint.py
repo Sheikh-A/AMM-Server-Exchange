@@ -277,23 +277,19 @@ def fill_order(order, txes=[]):
 def execute_txes(txes):
     if (len(txes) == 0) or (txes is None):
         return True
-    # print(f"Trying to execute {len(txes)} transactions")
-    # print(f"IDs = {[tx['order_id'] for tx in txes]}")
     
-    eth_sk, eth_pk = get_eth_keys()
     sk_algo, pk_algo = get_algo_keys()
-    if not all(tx['platform'] in ["Algorand", "Ethereum"] for tx in txes):
-        print("Error: execute_txes got an invalid platform!")
-        print(tx['platform'] for tx in txes)
-    algo_txes = [tx for tx in txes if tx['platform'] == "Algorand"]
-    eth_txes = [tx for tx in txes if tx['platform'] == "Ethereum"]
+    eth_sk, eth_pk = get_eth_keys()
 
-    # TODO: 
-    #       1. Send tokens on the Algorand and eth testnets, appropriately
-    #          We've provided the send_tokens_algo and send_tokens_eth skeleton methods in send_tokens.py
-    #       2. Add all transactions to the TX table
-    algo_txids=send_tokens_algo(g.acl, sk_algo, algo_txes)
-    eth_txids=send_tokens_eth(g.w3, eth_sk, eth_txes)
+    if not all(tx['platform'] in ["Algorand", "Ethereum"] for tx in txes):
+        print(tx['platform'] for tx in txes)
+    #ETH     
+    eth_transactions = [tokens for tokens in txes if tokens['platform'] == "Ethereum"]
+    #Algo
+    algo_transactions = [tokens for tokens in txes if tokens['platform'] == "Algorand"]
+    
+    algo_txids=send_tokens_algo(g.acl, sk_algo, algo_transactions)
+    eth_txids=send_tokens_eth(g.w3, eth_sk, eth_transactions)
 
 
 """ End of Helper methods"""
