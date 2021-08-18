@@ -339,36 +339,37 @@ def trade():
         payload = content["payload"]
         correct_signature = content["sig"]
         check_error = signature_verify(payload, correct_signature)
-        # 2. Add the order to the table
         full_order = None
         if check_error:
             full_order = add_order(payload, correct_signature)
         else:
             return jsonify(False)
-        # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
+
         check_tx=False
-        get_tx=None
-        if payload["platform"] == '':
-            get_tx = g.w3.eth.get_transaction(full_order.tx_id)
-            if get_tx == None:
-                return jsonify(False)
-            else:
-                if get_tx['to'] == full_order.receiver_pk and get_tx['value'] == full_order.sell_amount:
-                    check_tx=True
+        transaction_get=None
         if payload["platform"] == 'Algorand':
             icl = connect_to_algo(connection_type='indexer')
-            get_tx=icl.search_transaction(full_order.tx_id)
-            for tx in get_tx['transactions']:
+            transaction_get=icl.search_transaction(full_order.tx_id)
+            for tx in transaction_get['transactions']:
                 if 'payment-transaction' in tx.keys():
                     if tx['payment-transaction']['amount'] == full_order.sell_amount and tx['payment-transaction'][
                         'receiver'] == full_order.receiver_pk:
                         check_tx=True
-        # 3b. Fill the order (as in Exchange Server II) if the order is valid
+        
+        if payload["platform"] == '':
+            transaction_get = g.w3.eth.get_transaction(full_order.tx_id)
+            if transaction_get == None:
+                return jsonify(False)
+            #ELSE BLOCK
+            else:
+                if transaction_get['value'] == full_order.sell_amount and transaction_get['to'] == full_order.receiver_pk:
+                    check_tx = True
+        
         if check_tx:
-            fill_order(full_order,get_tx)
-        # 4. Execute the transactions
-            execute_txes(get_tx)
-        # If all goes well, return jsonify(True). else return jsonify(False)
+            fill_order(full_order,transaction_get)
+            execute_txes(transaction_get)
+        else:
+            print("check code")
     return jsonify(True)
 
 
