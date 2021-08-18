@@ -288,8 +288,8 @@ def execute_txes(txes):
     #Algo
     algo_transactions = [tokens for tokens in txes if tokens['platform'] == "Algorand"]
     
-    algo_txids=send_tokens_algo(g.acl, sk_algo, algo_transactions)
-    eth_txids=send_tokens_eth(g.w3, eth_sk, eth_transactions)
+    # algo_txids=send_tokens_algo(g.acl, sk_algo, algo_transactions)
+    # eth_txids=send_tokens_eth(g.w3, eth_sk, eth_transactions)
 
 
 """ End of Helper methods"""
