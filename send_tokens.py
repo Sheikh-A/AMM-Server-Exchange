@@ -110,9 +110,15 @@ def send_tokens_eth(w3,sender_sk,txes):
     tx_ids = []
     for i,tx_amount in enumerate(txes):
         transaction_dictionary = {
+                #nonce
+                #gasPrice
+                #gas
+                #to
+                #value
+                #data
                 'nonce': i + nonce_start,
                 'gasPrice':w3.eth.gas_price,
-                'gas': w3.eth.estimate_gas( { 'from': sender_pk, 'to': receiver_pk, 'data': b'', 'amount': tx_amount } ),
+                'gas': w3.eth.estimate_gas({'from': sender_pk, 'to': receiver_pk, 'data': b'', 'amount': tx_amount}),
                 #send address
                 'to': receiver_pk,
                 'value': tx_amount,
