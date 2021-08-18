@@ -151,22 +151,26 @@ def get_algo_keys():
     return sk_algo, pk_algo
 
 
-def check_sig(payload, sig):
-    platform = payload["platform"]
+def signature_verify(payload, sig):
+
     sender_pk = payload["sender_pk"]
-    sig_right = False
-    # check sig
-    if platform == "Ethereum":
-        msg = json.dumps(payload)
-        eth_encoded_msg = eth_account.messages.encode_defunct(text=msg)
-        get_account = eth_account.Account.recover_message(signable_message=eth_encoded_msg, signature=sig)
-        if sender_pk == get_account:
-            sig_right = True
+    platform = payload["platform"]
+    
+    correct_input = False
+    #ALGO
     if platform == "Algorand":
         msg = json.dumps(payload)
         if algosdk.util.verify_bytes(msg.encode('utf-8'), sig, sender_pk):
-            sig_right = True
-    return sig_right
+            correct_input = True
+    elif platform == "Ethereum":
+        msg = json.dumps(payload)
+        eth_msg = eth_account.messages.encode_defunct(text=msg)
+        account_info = eth_account.Account.recover_message(signable_message=eth_msg, signature=sig)
+        if account_info == sender_pk:
+            correct_input = True
+    else:
+        print("Check signature")
+    return correct_input
 
 
 def fill_order(order, txes=[]):
@@ -334,7 +338,7 @@ def trade():
         # 1. Check the signature
         sig = content["sig"]
         payload = content["payload"]
-        check_flag = check_sig(payload, sig)
+        check_flag = signature_verify(payload, sig)
         # 2. Add the order to the table
         order = None
         if check_flag:
